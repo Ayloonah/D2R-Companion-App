@@ -9,7 +9,7 @@ It is good to keep in mind that the scope of this companion app is to keep track
 - Jewels, which have random stat values
 We will also make sure to track gems and runes, though for those, as their stats are predefined, only the item name will be considered.
 
-The in-game screenshots were taken with these following settings: 
+The in-game screenshots were taken with these settings: 
 - Resolution: 2560x1440
 - Display mode: Fullscreen
 - Resolution scale: 100
