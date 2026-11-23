@@ -1,0 +1,26 @@
+<annotation>
+	<folder>Dataset</folder>
+	<filename>0037_runeword_offhand_stash.png</filename>
+	<path>C:\Code\D2R-Companion-App\Dataset\0037_runeword_offhand_stash.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2560</width>
+		<height>1440</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tooltip</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>328</xmin>
+			<ymin>168</ymin>
+			<xmax>908</xmax>
+			<ymax>738</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>Dataset</folder>
+	<filename>0018_normal_weapon_inventory.png</filename>
+	<path>C:\Code\D2R-Companion-App\Dataset\0018_normal_weapon_inventory.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2555</width>
+		<height>1440</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tooltip</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1604</xmin>
+			<ymin>451</ymin>
+			<xmax>2159</xmax>
+			<ymax>736</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -1,0 +1,14 @@
+<annotation verified="yes">
+	<folder>Dataset</folder>
+	<filename>0017_neg_ground.png</filename>
+	<path>C:\Code\D2R-Companion-App\Dataset\0017_neg_ground.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2560</width>
+		<height>1440</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+</annotation>

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>Dataset</folder>
+	<filename>0062_runeword_helm_equipped.png</filename>
+	<path>C:\Code\D2R-Companion-App\Dataset\0062_runeword_helm_equipped.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2557</width>
+		<height>1440</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tooltip</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>1668</xmin>
+			<ymin>424</ymin>
+			<xmax>2221</xmax>
+			<ymax>997</ymax>
+		</bndbox>
+	</object>
+</annotation>

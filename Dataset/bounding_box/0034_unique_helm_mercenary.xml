@@ -1,0 +1,26 @@
+<annotation>
+	<folder>Dataset</folder>
+	<filename>0034_unique_helm_mercenary.png</filename>
+	<path>C:\Code\D2R-Companion-App\Dataset\0034_unique_helm_mercenary.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>2557</width>
+		<height>1440</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>tooltip</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>355</xmin>
+			<ymin>431</ymin>
+			<xmax>879</xmax>
+			<ymax>857</ymax>
+		</bndbox>
+	</object>
+</annotation>
