@@ -11,7 +11,7 @@ It is good to keep in mind that the scope of this companion app is to keep track
 - Any equippable equipment, such as helmets, chest pieces, gloves, boots, amulets, rings, belts, weapons, and ammunition
 - Charms, which are usually kept in a player's inventory
 - Jewels, which have random stat values
-  We will also make sure to track gems, runes, and other miscellaneous items, though for those, as their stats are predefined or irrelevant, only the item name will be considered.
+We will also make sure to track gems, runes, and other miscellaneous items, though for those, as their stats are predefined or irrelevant, only the item name will be considered.
 
 The in-game screenshots were taken with these settings:
 
@@ -94,7 +94,6 @@ Here is each piece of information explained, with the potential values it will h
 To get the values for the bounding boxes, we have made use of LabelImg. We manually drew the bounding boxes around where the tooltips were inside of the screenshots, and the tool saved the data in PascalVOC XML format.
 
 In this step, Claude AI was used in the following ways:
-
 - It generated a screenshot tracking tool so that we could accurately keep track of the various types of screenshots that were taken versus those that were still needed.
 - It extracted the data from the tracker to get us started with the dataset annotation.
 - It extracted the bounding box values from the generated XML files to add them to the JSON annotations.
@@ -104,7 +103,24 @@ In this step, Claude AI was used in the following ways:
 
 ## Tooltip Detection
 
-In order to detect the tooltips, we will make use of edge detection and thresholding. The first thing of note when looking at tooltips in Diablo 2: Resurrected is that they are rectangular with a black semi-transparent background. This also applies to other UI elements, so it is not sufficient by itself, but it allows us to pinpoint potential locations to look at easily.
+In order to detect the tooltips, we decided to make use of edge detection and thresholding. The first thing of note when looking at tooltips in Diablo 2: Resurrected is that they are rectangular with a black semi-transparent background. This also applies to other UI elements, so it is not sufficient by itself, but it allows us to pinpoint potential locations to look at easily.
+
+To get us started, we first converted screenshots four to seven to greyscale and looked at the median pixel value inside of the tooltip area. We used this value to choose a threshold which was then applied to the image: anything lower than the threshold was turned white, and everything else was turned black. This allowed us to realize that the semi-transparency of the tooltips caused background items to seep through, and that might be problematic when trying to find the tooltip's location.
+
+We tried morphological closing to fill in the spots left behind by the background elements and then drawing a box around the tooltip, but the tooltips ended up being merged with dark parts of the background, meaning that the boxes were covering more than just the tooltip. This caused us to drop this approach.
+
+Our next attempt at detecting the tooltips consisted of using Canny to find all of the edges inside of our greyscale screenshots. We were mostly able to observe the tooltips in this way, but the results were still very messy, and some tooltip edges were getting mixed up with the surrounding elements. We tried using morphological opening with long 100×1 and 1×100 kernels to isolate the horizontal and vertical lines in an effort to get rid of the clutter, and although this caused a lot of the UI to be captured as well, it seemed promising.
+
+For the edges to be more visible and for us to be able to see unbroken lines in the produced images, we tried dilating the edges previously found before isolating the straight edges. We then filtered out any results that had too small of an area as well as anything too bright and drew a box around the tooltip. However, no matter the values we used, while some tooltips were being properly captured, most were either not fully detected or not detected at all, with random UI elements getting a bounding box as well. This was caused by the tooltips' transparency as well as them having no border, making it hard to isolate them properly. We therefore dropped this approach as well.
+
+By this point, we considered our options and figured it would potentially be easier to instead use the tooltips' text to find the tooltip itself.
+
+In this step, Claude AI was used in the following ways:
+
+- It helped us learn the various functions of OpenCV we were not familiar with.
+- It suggested approaches and helped us troubleshoot when we hit roadblocks.
+
+All code in this step is our own.
 
 ## Tooltip Verification
 
