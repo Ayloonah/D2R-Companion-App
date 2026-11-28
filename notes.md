@@ -62,6 +62,7 @@ Here is each piece of information explained, with the potential values it will h
 
 - image: The image file name in the format "0001_rarity_slot_background.png", with the mention of "ethereal" being added in when applicable
 - resolution: Game resolution, which is 2560x1440 for all of these images
+  - Although this is the correct resolution, nine of the dataset screenshots were a few pixels smaller due to cropping during capture
 - split: Whether the image is part of the train or test set
 - background: Information on where the tooltip is shown
   - Potential values: inventory, equipped, stash, shop, cube, mercenary
@@ -116,7 +117,7 @@ For the edges to be more visible and for us to be able to see unbroken lines in 
 
 By this point, we considered our options and figured it would potentially be easier to instead use the tooltips' text to find the tooltip itself. This is therefore what we set out to do.
 
-Before anything, we first decided to integrate a resizing step so that no matter the user's resolution, we would be looking at images of the same size. We settled on 1920x1080 as our resolution of choice.
+Before anything, we first decided to integrate a resizing step so that no matter the user's resolution, we would be looking at images of the same size. We settled on 1920x1080 as our resolution of choice. This also fixed the sizing issues with the nine slightly smaller screenshots.
 
 Then, so that we may more easily find the text in our screenshots, because it is one of the brightest elements, we started by reducing the number of channels from three to one, only keeping the highest of the three RGB values. This allowed us to better detect the blue colored text which might have gotten lost using grayscale. We set a threshold at 95 and also set out to dilate the letters with a kernel of size 25x3 so that lines of text turned into a blob. We found those blobs' contours and stored any that were of a height and width fitting a line of text (height between 10 and 25 pixels with width to height ratio of more than 4) into a list which we sorted by y value.
 
