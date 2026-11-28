@@ -11,7 +11,7 @@ It is good to keep in mind that the scope of this companion app is to keep track
 - Any equippable equipment, such as helmets, chest pieces, gloves, boots, amulets, rings, belts, weapons, and ammunition
 - Charms, which are usually kept in a player's inventory
 - Jewels, which have random stat values
-We will also make sure to track gems, runes, and other miscellaneous items, though for those, as their stats are predefined or irrelevant, only the item name will be considered.
+  We will also make sure to track gems, runes, and other miscellaneous items, though for those, as their stats are predefined or irrelevant, only the item name will be considered.
 
 The in-game screenshots were taken with these settings:
 
@@ -94,6 +94,7 @@ Here is each piece of information explained, with the potential values it will h
 To get the values for the bounding boxes, we have made use of LabelImg. We manually drew the bounding boxes around where the tooltips were inside of the screenshots, and the tool saved the data in PascalVOC XML format.
 
 In this step, Claude AI was used in the following ways:
+
 - It generated a screenshot tracking tool so that we could accurately keep track of the various types of screenshots that were taken versus those that were still needed.
 - It extracted the data from the tracker to get us started with the dataset annotation.
 - It extracted the bounding box values from the generated XML files to add them to the JSON annotations.
@@ -113,12 +114,105 @@ Our next attempt at detecting the tooltips consisted of using Canny to find all 
 
 For the edges to be more visible and for us to be able to see unbroken lines in the produced images, we tried dilating the edges previously found before isolating the straight edges. We then filtered out any results that had too small of an area as well as anything too bright and drew a box around the tooltip. However, no matter the values we used, while some tooltips were being properly captured, most were either not fully detected or not detected at all, with random UI elements getting a bounding box as well. This was caused by the tooltips' transparency as well as them having no border, making it hard to isolate them properly. We therefore dropped this approach as well.
 
-By this point, we considered our options and figured it would potentially be easier to instead use the tooltips' text to find the tooltip itself.
+By this point, we considered our options and figured it would potentially be easier to instead use the tooltips' text to find the tooltip itself. This is therefore what we set out to do.
+
+Before anything, we first decided to integrate a resizing step so that no matter the user's resolution, we would be looking at images of the same size. We settled on 1920x1080 as our resolution of choice.
+
+Then, so that we may more easily find the text in our screenshots, because it is one of the brightest elements, we started by reducing the number of channels from three to one, only keeping the highest of the three RGB values. This allowed us to better detect the blue colored text which might have gotten lost using grayscale. We set a threshold at 95 and also set out to dilate the letters with a kernel of size 25x3 so that lines of text turned into a blob. We found those blobs' contours and stored any that were of a height and width fitting a line of text (height between 10 and 25 pixels with width to height ratio of more than 4) into a list which we sorted by y value.
+
+We grouped these potential lines of text into groups based on their location on the screen. If a line was within 80 pixels of another in y and centered within 15 pixels of the same x of it, we determined it was part of the same tooltip and therefore grouped them together. With that done, we discarded any group with only a single line of text, added a 10 pixel padding all around, and were left with our potential tooltip locations.
+
+To determine if this was a good approach, after our initial test on a sample of four screenshots, we ran the code on the whole training set and ended up with the following results:
+
+- True Positives: 103
+- False Positives: 45
+- False Negatives: 3
+- Negative images with nothing detected: 2
+- Precision: 0.6959
+- Recall: 0.9717
+- F1: 0.8110
+- Mean IoU: 0.8799
+
+It is good to note that these statistics were obtained using an IoU threshold of 0.5 with one-to-one matching on our training set of 108 images only.
+
+The results showed that this approach was the most promising, with 103 out of 106 tooltips found, leaving us with a recall of 97%. We however ended up with a higher number of false positives than we would have liked, with 9 of the 11 negatives getting at least one detected tooltip, and sought to find a way to reduce them.
+
+Looking at our contoured screenshots, we found that the following situations caused the most false positives to be triggered:
+
+- Ground item labels and NPC names
+- Mercenary and character stat labels
+- Various UI elements displayed as lines, such as the stamina bar, dividers, stash page selector, and gold box
+- Chat and message of the day
+
+Additionally, we could see the missed tooltips were either caused by a tooltip being split in two (screenshot #0027), or the detected tooltip size being smaller than the actual tooltip size (screenshots #0124 and #0127).
+
+To resolve this, we decided to first calculate a detected tooltip's line count and median darkness value to decide on accurate thresholds to use instead of guessing like we did the first time around.
+
+Analyzing the results showed us the following:
+
+- TP median darkness avg value: 6.6311
+- TP median darkness min/max values: 2.0/13.0
+- TP lines avg value: 10.6893
+- TP lines min/max values: 2/22
+- FP median darkness avg value: 15.7111
+- FP median darkness min/max values: 2.0/65.0
+- FP lines avg value: 2.5778
+- FP lines min/max values: 2/11
+
+Using this data, we decided to settle on the following as initial values:
+
+- Discard anything with a median darkness value higher than 13
+- Keep the 2 lines minimum and do not implement a maximum number of lines
+
+Anything less would risk causing us to lose our true positives.
+
+Then, we went ahead and applied the following fixes:
+
+- To avoid detected tooltip regions being too narrow or small, add region growing based on surrounding pixel values.
+- Merge vertically aligned detected tooltips if the median darkness value of the region between them fits our threshold to avoid splitting.
+
+When it comes to region growing, we initially figured only horizontal region growing would be necessary, but we quickly realized that item names were getting cropped out. Therefore, we also applied vertical region growing, and we could confirm that this improved our results.
+
+As we implemented both fixes, we tested along the way, and noticed that some of the values we had chosen were causing false positives and negatives. In the end, the following parameters gave us the best results:
+
+- Threshold of 95
+- 25×3 closing kernel
+- Only keep blobs of height 10–25 pixels with a width to height ratio > 4
+- Group blobs with less than an 80 pixel vertical gap, with a 15 pixel center tolerance, and at least 2 lines
+- Merge tooltips with centers within 15 pixels of each other, a gap of no more than 200 pixels, and a gap median darkness value of no more than 30
+- Only keep tooltips with a median darkness value of no more than 13
+- Horizontal region growing: median darkness value of no more than 17, cap growth at 115 pixels
+- Vertical region growing: median darkness value of no more than 13, top cap growth at 20 pixels, bottom cap growth at 40 pixels
+
+The final results on our training and testing sets were the following:
+
+| Metric                            | Training | Testing |
+| --------------------------------- | -------: | ------: |
+| True positives                    |      104 |      51 |
+| False positives                   |       19 |       2 |
+| False negatives                   |        2 |       0 |
+| Negative images with no detection |        7 |       3 |
+| Precision                         |   0.8455 |  0.9623 |
+| Recall                            |   0.9811 |  1.0000 |
+| F1                                |   0.9083 |  0.9808 |
+| Mean IoU                          |   0.9471 |  0.9405 |
+
+We were worried about potential overfitting since certain parameter tweaks only improved the results on one or two images, but the results we obtained on our testing set were reassuring. Since the sample size on the testing set is half that of the training set, the higher test numbers likely came from the small sample size and from fewer of the scene types that cause false positives. This being said, the mean IoU being similar for both was a good sign of generalization. The two false positives also made sense, one of them being text on a dark UI and the other being a tooltip which will be discarded during verification.
+
+Even with these fixes, we could notice the following limitations: 
+
+- When tooltips are over bright elements, it causes the detected box to still be too narrow.
+- The gap median darkness value of 30 was chosen based mostly on the results of one image.
+- Some text elements will always be detected during this step and can only be discarded during verification.
 
 In this step, Claude AI was used in the following ways:
 
 - It helped us learn the various functions of OpenCV we were not familiar with.
 - It suggested approaches and helped us troubleshoot when we hit roadblocks.
+- It helped us analyze our results to better know how to improve our algorithm.
+- It helped with debugging.
+- It moved the code from dataset_detection.py into detect.py and evaluate_detection.py for us.
+  - It kept our logic the same, though it split everything into functions and also moved the parameter values into constants defined at the top.
 
 All code in this step is our own.
 
